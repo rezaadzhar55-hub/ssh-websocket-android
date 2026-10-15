@@ -25,14 +25,15 @@ public final class MainActivity extends Activity {
         thread.setDaemon(true);
         return thread;
     });
-    private final TunnelManager manager = new TunnelManager();
+    
     private EditText sshHost, sshPort, sshUser, sshPassword;
     private EditText wsHost, wsPort, wsPayload, fingerprint;
     private CheckBox wsTls;
     private TextView status, observedFingerprint;
     private TextView logView;
-    private Button saveButton, connectButton, clearButton, logClearButton;
-    private final LogMonitor logMonitor = new LogMonitor();
+    private Button saveButton, connectButton, clearButton, logClearButton, vpnButton;
+    private final LogMonitor logMonitor = TunnelState.get().log();
+    private TunnelManager getManager() { return TunnelState.get().manager(); }
     private static final int COLOR_GREEN = 0xFF4CAF50;
     private static final int COLOR_YELLOW = 0xFFFFC107;
     private static final int COLOR_RED = 0xFFF44336;
@@ -44,6 +45,7 @@ public final class MainActivity extends Activity {
         DIVIDER = b.toString();
     }
     private boolean busy;
+    private boolean TunnelVpnRunning;
 
     @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -81,6 +83,8 @@ public final class MainActivity extends Activity {
         logView = findViewById(R.id.log_view);
         logView.setMovementMethod(new android.text.method.ScrollingMovementMethod());
         logClearButton = findViewById(R.id.log_clear_button);
+        vpnButton = findViewById(R.id.vpn_button);
+        vpnButton.setOnClickListener(v -> toggleVpn());
         logClearButton.setOnClickListener(v -> {
             logMonitor.clear();
             logView.setText("");
@@ -148,7 +152,7 @@ public final class MainActivity extends Activity {
     private static String value(EditText field) { return field.getText().toString().trim(); }
 
     private void saveProfile() {
-        if (busy || manager.isConnected()) return;
+        if (busy || getManager().isConnected()) return;
         try {
             SshProfile profile = readForm();
             ProfileVault.save(this, profile);
@@ -162,13 +166,13 @@ public final class MainActivity extends Activity {
 
     private void toggleConnection() {
         if (busy) return;
-        if (manager.isConnected()) {
+        if (getManager().isConnected()) {
             busy = true;
             status.setText(R.string.status_disconnecting);
             refreshUi();
             logMonitor.stopPing();
             worker.execute(() -> {
-                manager.disconnect();
+                getManager().disconnect();
                 runOnUiThread(() -> {
                     busy = false;
                     status.setText(R.string.status_disconnected);
@@ -263,8 +267,45 @@ public final class MainActivity extends Activity {
         });
     }
 
+    private void toggleVpn() {
+        if (busy) return;
+        final SshProfile profile;
+        try { profile = readForm(); ProfileVault.save(this, profile); }
+        catch (Exception e) { status.setText(e.getMessage() == null ? getString(R.string.input_required) : e.getMessage()); return; }
+        if (TunnelVpnRunning) {
+            stopService(new Intent(this, TunnelVpnService.class));
+            TunnelVpnRunning = false;
+            status.setText(R.string.status_disconnected);
+            logMonitor.log("VPN dimatikan");
+            refreshUi();
+            return;
+        }
+        TunnelState.get().setProfile(profile);
+        Intent i = new Intent(this, TunnelVpnService.class);
+        i.putExtra(TunnelVpnService.EXTRA_PROFILE, profile);
+        startActivityForResult(VpnService.prepare(this), 77);
+    }
+
+    @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == 77) {
+            if (resultCode == RESULT_OK) {
+                TunnelVpnRunning = true;
+                SshProfile p = TunnelState.get().profile();
+                Intent i = new Intent(this, TunnelVpnService.class);
+                i.putExtra(TunnelVpnService.EXTRA_PROFILE, p);
+                startService(i);
+                status.setText("VPN mode: menyambungkan...");
+                logMonitor.log("VPN mode: start");
+            } else {
+                status.setText("Izin VPN ditolak");
+            }
+            refreshUi();
+        }
+    }
+
     private void refreshUi() {
-        boolean connected = manager.isConnected();
+        boolean connected = getManager().isConnected();
         if (connected && !busy) status.setText(R.string.status_connected);
         connectButton.setText(connected ? R.string.disconnect : R.string.connect);
         connectButton.setEnabled(!busy);
@@ -279,7 +320,7 @@ public final class MainActivity extends Activity {
     }
 
     private void confirmClear() {
-        if (busy || manager.isConnected() || !ProfileVault.exists(this)) return;
+        if (busy || getManager().isConnected() || !ProfileVault.exists(this)) return;
         new AlertDialog.Builder(this)
                 .setMessage(R.string.confirm_clear)
                 .setPositiveButton(R.string.clear_profile, (dialog, which) -> {
@@ -303,7 +344,7 @@ public final class MainActivity extends Activity {
             // A disconnected UI must not leave a listener on the loopback proxy.
             logMonitor.stopPing();
             logMonitor.detach();
-            manager.disconnect();
+            getManager().disconnect();
             worker.shutdownNow();
         }
     }

@@ -3,7 +3,7 @@ package com.rezadzhar.sshwebsocket;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-final class SshProfile {
+final class SshProfile implements java.io.Serializable {
     final String sshHost;
     final int sshPort;
     final String username;
