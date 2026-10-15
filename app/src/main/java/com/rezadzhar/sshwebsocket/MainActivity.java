@@ -48,6 +48,22 @@ public final class MainActivity extends Activity {
 
     @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        final Thread.UncaughtExceptionHandler defaultHandler = Thread.getDefaultUncaughtExceptionHandler();
+        Thread.setDefaultUncaughtExceptionHandler((t, e) -> runOnUiThread(() -> {
+            android.widget.LinearLayout box = new android.widget.LinearLayout(this);
+            box.setOrientation(android.widget.LinearLayout.VERTICAL);
+            android.widget.TextView tv = new android.widget.TextView(this);
+            java.io.StringWriter sw = new java.io.StringWriter();
+            e.printStackTrace(new java.io.PrintWriter(sw));
+            String msg = sw.toString();
+            if (msg.length() > 4000) msg = msg.substring(0, 4000);
+            tv.setText("CRASH:\n" + msg);
+            tv.setTextSize(10);
+            tv.setTypeface(android.graphics.Typeface.MONOSPACE);
+            box.addView(tv);
+            setContentView(box);
+        }));
+        try {
         setContentView(R.layout.activity_main);
         sshHost = findViewById(R.id.ssh_host);
         sshPort = findViewById(R.id.ssh_port);
@@ -81,6 +97,9 @@ public final class MainActivity extends Activity {
         clearButton.setOnClickListener(v -> confirmClear());
         loadProfile();
         refreshUi();
+        } catch (Throwable e) {
+            Thread.getDefaultUncaughtExceptionHandler().uncaughtException(Thread.currentThread(), e);
+        }
     }
 
     @Override protected void onResume() {
