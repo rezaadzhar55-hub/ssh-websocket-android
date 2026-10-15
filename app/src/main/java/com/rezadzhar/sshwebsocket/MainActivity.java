@@ -51,6 +51,11 @@ public final class MainActivity extends Activity {
 
     @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        android.view.View header = getLayoutInflater().inflate(R.layout.form_header, null);
+        android.widget.ListView formList = findViewById(R.id.form_list);
+        formList.setAdapter(new android.widget.ArrayAdapter<>(this, android.R.layout.simple_list_item_1, new String[]{""}));
+        formList.addHeaderView(header, null, false);
         final android.os.Handler uiHandler = new android.os.Handler(android.os.Looper.getMainLooper());
         Thread.setDefaultUncaughtExceptionHandler((t, e) -> uiHandler.post(() -> {
             android.widget.LinearLayout box = new android.widget.LinearLayout(this);
@@ -67,7 +72,6 @@ public final class MainActivity extends Activity {
             setContentView(box);
         }));
         try {
-        setContentView(R.layout.activity_main);
         sshHost = findViewById(R.id.ssh_host);
         sshPort = findViewById(R.id.ssh_port);
         sshUser = findViewById(R.id.ssh_user);
