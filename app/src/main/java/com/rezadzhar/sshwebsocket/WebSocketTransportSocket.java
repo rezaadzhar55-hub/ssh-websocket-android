@@ -55,6 +55,7 @@ final class WebSocketTransportSocket extends Socket {
             transportIn = raw.getInputStream();
             transportOut = raw.getOutputStream();
             performHandshake(profile);
+            if (profile.handshakeLogger != null) profile.handshakeLogger.run();
             raw.setSoTimeout(0);
             lastActivity = System.currentTimeMillis();
             pingThread = new Thread(this::pingLoop, "ws-ping");

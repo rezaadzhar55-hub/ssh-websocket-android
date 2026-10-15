@@ -33,5 +33,16 @@
     <string name="usage_note">Aplikasi ini tidak membuat VPN dan tidak merutekan seluruh perangkat. Setelah tersambung, hanya aplikasi yang Anda atur sendiri untuk memakai proxy SOCKS5 127.0.0.1:1080 yang akan mengirim koneksi TCP melalui SSH. UDP tidak diteruskan. VPS harus menyediakan gateway WebSocket yang meneruskan WebSocket biner ke layanan SSH. Gunakan hanya VPS dan jaringan yang Anda berwenang akses.</string>
     <string name="ok">OK</string>
     <string name="cancel">Batal</string>
+    <string name="log_section">Log Koneksi</string>
+    <string name="log_clear">Bersihkan Log</string>
+    <string name="ping_prefix">[PING] </string>
+    <string name="ping_ms_fmt">[PING] %d ms</string>
+    <string name="ping_fail">[PING] gagal (timeout)</string>
+    <string name="log_ws_handshake">WebSocket handshake OK</string>
+    <string name="log_ws_closed">WebSocket ditutup</string>
+    <string name="log_socks_start">SOCKS5 aktif di 127.0.0.1:1080</string>
+    <string name="log_socks_client">Klien SOCKS5 → %s:%d</string>
+    <string name="log_socks_done">Klien SOCKS5 selesai</string>
+    <string name="log_ping_start">Ping monitor aktif (tiap 30 detik)</string>
     <string name="default_payload">GET / HTTP/1.1[crlf]Host: [host][crlf]Upgrade: websocket[crlf]Connection: Upgrade[crlf]Sec-WebSocket-Key: [key][crlf]Sec-WebSocket-Version: 13[crlf][crlf]</string>
 </resources>

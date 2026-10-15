@@ -13,6 +13,7 @@ final class SshProfile {
     final boolean wsTls;
     final String payload;
     final String fingerprint;
+    transient Runnable handshakeLogger;
 
     SshProfile(String sshHost, int sshPort, String username, String password,
                String wsHost, int wsPort, boolean wsTls, String payload, String fingerprint) {
@@ -63,6 +64,13 @@ final class SshProfile {
                 json.optString("username"), json.optString("password"),
                 json.optString("wsHost"), json.optInt("wsPort", 443), json.optBoolean("wsTls", true),
                 json.optString("payload"), json.optString("fingerprint"));
+    }
+
+    void setHandshakeLogger(Runnable r) { this.handshakeLogger = r; }
+
+    static String now() {
+        return new java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.US)
+                .format(new java.util.Date());
     }
 
     private static String clean(String value) {

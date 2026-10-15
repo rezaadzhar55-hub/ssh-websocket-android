@@ -17,9 +17,11 @@ import java.security.MessageDigest;
 final class TunnelManager {
     private volatile Session session;
     private volatile SocksProxy socksProxy;
+    private volatile LogMonitor log;
     private volatile String observedFingerprint;
 
-    synchronized void connect(SshProfile profile) throws Exception {
+    synchronized void connect(SshProfile profile, LogMonitor logMonitor) throws Exception {
+        log = logMonitor;
         if (isConnected()) return;
         observedFingerprint = null;
         JSch jsch = new JSch();
@@ -43,7 +45,8 @@ final class TunnelManager {
         });
         try {
             candidate.connect(30_000);
-            SocksProxy proxy = new SocksProxy(candidate);
+            if (log != null) log.log("SSH handshake OK (" + profile.sshHost + ":" + profile.sshPort + ")");
+            SocksProxy proxy = new SocksProxy(candidate, log);
             proxy.start();
             session = candidate;
             socksProxy = proxy;

@@ -3,11 +3,17 @@ package com.rezadzhar.sshwebsocket;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.os.Bundle;
+import android.graphics.Color;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
+import android.text.style.ForegroundColorSpan;
+import android.text.style.StyleSpan;
 import android.text.InputType;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 import java.util.concurrent.ExecutorService;
@@ -24,7 +30,20 @@ public final class MainActivity extends Activity {
     private EditText wsHost, wsPort, wsPayload, fingerprint;
     private CheckBox wsTls;
     private TextView status, observedFingerprint;
-    private Button saveButton, connectButton, clearButton;
+    private TextView logView;
+    private ScrollView logScroll;
+    private Button saveButton, connectButton, clearButton, logClearButton;
+    private final LogMonitor logMonitor = new LogMonitor();
+    private static final int COLOR_GREEN = 0xFF4CAF50;
+    private static final int COLOR_YELLOW = 0xFFFFC107;
+    private static final int COLOR_RED = 0xFFF44336;
+    private static final int COLOR_GRAY = 0xFF8A97A8;
+    private static final String DIVIDER;
+    static {
+        StringBuilder b = new StringBuilder(32);
+        for (int i = 0; i < 32; i++) b.append('\u2500');
+        DIVIDER = b.toString();
+    }
     private boolean busy;
 
     @Override protected void onCreate(Bundle savedInstanceState) {
@@ -44,6 +63,18 @@ public final class MainActivity extends Activity {
         saveButton = findViewById(R.id.save_button);
         connectButton = findViewById(R.id.connect_button);
         clearButton = findViewById(R.id.clear_button);
+        logView = findViewById(R.id.log_view);
+        logScroll = findViewById(R.id.log_scroll);
+        logClearButton = findViewById(R.id.log_clear_button);
+        logClearButton.setOnClickListener(v -> {
+            logMonitor.clear();
+            logView.setText("");
+            appendLogLine("Log dibersihkan", COLOR_GRAY, false);
+            logMonitor.log("Log dibersihkan");
+        });
+        logMonitor.attach(line -> runOnUiThread(() -> appendLogLine(line, 0, true)), false);
+        logView.setText(DIVIDER + "\n" + "Log siap. Tekan Hubungkan SSH untuk mulai." + "\n" + DIVIDER);
+        logScroll.post(() -> logScroll.fullScroll(View.FOCUS_DOWN));
 
         saveButton.setOnClickListener(v -> saveProfile());
         connectButton.setOnClickListener(v -> toggleConnection());
@@ -118,12 +149,14 @@ public final class MainActivity extends Activity {
             busy = true;
             status.setText(R.string.status_disconnecting);
             refreshUi();
+            logMonitor.stopPing();
             worker.execute(() -> {
                 manager.disconnect();
                 runOnUiThread(() -> {
                     busy = false;
                     status.setText(R.string.status_disconnected);
                     refreshUi();
+                    logMonitor.log("Terputus");
                 });
             });
             return;
@@ -140,13 +173,25 @@ public final class MainActivity extends Activity {
         observedFingerprint.setText("");
         status.setText(R.string.status_connecting);
         refreshUi();
+        logMonitor.log("Menghubungkan ke " + profile.wsHost + ":" + profile.wsPort
+                + (profile.wsTls ? " (TLS)" : ""));
+        profile.setHandshakeLogger(() -> logMonitor.log("WebSocket handshake OK"));
         worker.execute(() -> {
             try {
-                manager.connect(profile);
+                manager.connect(profile, logMonitor);
                 runOnUiThread(() -> {
                     busy = false;
                     status.setText(R.string.status_connected);
                     refreshUi();
+                    logMonitor.log("Connected (SOCKS5 127.0.0.1:1080)");
+                    logMonitor.startPing(profile.wsHost, profile.wsPort, new LogMonitor.PingCallback() {
+                        @Override public void onPing(long ms) {
+                            runOnUiThread(() -> appendLogLine("[PING] " + ms + " ms", 0, true));
+                        }
+                        @Override public void onPingFail() {
+                            runOnUiThread(() -> appendLogLine("[PING] gagal (timeout)", COLOR_RED, true));
+                        }
+                    });
                 });
             } catch (Exception e) {
                 String observed = manager.getObservedFingerprint();
@@ -165,6 +210,36 @@ public final class MainActivity extends Activity {
                 });
             }
         });
+    }
+
+    private void appendLogLine(String line, int color, boolean autoScroll) {
+        if (logView.length() > 0) logView.append("\n" + DIVIDER + "\n");
+        SpannableStringBuilder sb = new SpannableStringBuilder(line);
+        int colorToUse = color;
+        if (colorToUse == 0) {
+            if (line.contains("[PING]")) {
+                colorToUse = COLOR_GRAY;
+                java.util.regex.Matcher m = java.util.regex.Pattern
+                        .compile("(\\d+) ms").matcher(line);
+                if (m.find()) {
+                    int ms = Integer.parseInt(m.group(1));
+                    colorToUse = ms < 200 ? COLOR_GREEN : ms <= 500 ? COLOR_YELLOW : COLOR_RED;
+                    sb.setSpan(new ForegroundColorSpan(colorToUse), m.start(), m.end(),
+                            Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                }
+            } else if (line.contains("Connected") || line.contains("Terhubung")
+                    || line.contains("SOCKS5 aktif")) {
+                colorToUse = COLOR_GREEN;
+                sb.setSpan(new StyleSpan(android.graphics.Typeface.BOLD), 0, line.length(),
+                        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            }
+        }
+        if (colorToUse != 0 && !line.contains("[PING]")) {
+            sb.setSpan(new ForegroundColorSpan(colorToUse), 0, line.length(),
+                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
+        logView.append(sb);
+        if (autoScroll) logScroll.post(() -> logScroll.fullScroll(View.FOCUS_DOWN));
     }
 
     private void refreshUi() {
@@ -205,6 +280,8 @@ public final class MainActivity extends Activity {
         super.onDestroy();
         if (isFinishing()) {
             // A disconnected UI must not leave a listener on the loopback proxy.
+            logMonitor.stopPing();
+            logMonitor.detach();
             manager.disconnect();
             worker.shutdownNow();
         }

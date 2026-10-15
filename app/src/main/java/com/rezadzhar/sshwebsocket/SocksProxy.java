@@ -19,6 +19,7 @@ import java.util.concurrent.Executors;
 final class SocksProxy implements AutoCloseable {
     static final int LOCAL_PORT = 1080;
     private final Session session;
+    private final LogMonitor log;
     private final ExecutorService clients = Executors.newCachedThreadPool(r -> {
         Thread thread = new Thread(r, "ssh-socks-client");
         thread.setDaemon(true);
@@ -28,7 +29,7 @@ final class SocksProxy implements AutoCloseable {
     private ServerSocket server;
     private Thread acceptThread;
 
-    SocksProxy(Session session) { this.session = session; }
+    SocksProxy(Session session, LogMonitor log) { this.session = session; this.log = log; }
 
     void start() throws IOException {
         server = new ServerSocket();
@@ -104,6 +105,7 @@ final class SocksProxy implements AutoCloseable {
             channel.connect(15_000);
             socket.setSoTimeout(0);
             sendReply(output, 0);
+            if (log != null) log.log("SOCKS5 client \u2192 " + target + ":" + targetPort);
             InputStream remoteInput = channel.getInputStream();
             OutputStream remoteOutput = channel.getOutputStream();
             Channel activeChannel = channel;
