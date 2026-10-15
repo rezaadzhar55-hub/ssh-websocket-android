@@ -44,5 +44,5 @@
     <string name="log_socks_client">Klien SOCKS5 → %s:%d</string>
     <string name="log_socks_done">Klien SOCKS5 selesai</string>
     <string name="log_ping_start">Ping monitor aktif (tiap 30 detik)</string>
-    <string name="default_payload">GET / HTTP/1.1[crlf]Host: [host][crlf]Upgrade: websocket[crlf]Connection: Upgrade[crlf]Sec-WebSocket-Key: [key][crlf]Sec-WebSocket-Version: 13[crlf][crlf]</string>
+    <string name="default_payload">GET /ssh HTTP/1.1[crlf]Host: [host][crlf]Upgrade: websocket[crlf]Connection: Upgrade[crlf]Sec-WebSocket-Key: [key][crlf]Sec-WebSocket-Version: 13[crlf][crlf]</string>
 </resources>
