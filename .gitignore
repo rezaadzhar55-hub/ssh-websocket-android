@@ -1,0 +1,11 @@
+# Gradle / Android Studio
+.gradle/
+**/build/
+local.properties
+.idea/
+*.iml
+
+# Never commit WireGuard client profiles or signing keys
+*.conf
+*.jks
+*.keystore

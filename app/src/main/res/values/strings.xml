@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SSH WebSocket</string>
+    <string name="app_title">SSH WebSocket</string>
+    <string name="app_subtitle">Klien SSH untuk VPS Anda • SOCKS5 TCP lokal</string>
+    <string name="ssh_section">Akun SSH</string>
+    <string name="ssh_host_hint">Host SSH di VPS (contoh: vps.example.com)</string>
+    <string name="ssh_port_hint">Port SSH (default 22)</string>
+    <string name="ssh_user_hint">Nama pengguna SSH</string>
+    <string name="ssh_password_hint">Kata sandi SSH</string>
+    <string name="websocket_section">Transport WebSocket</string>
+    <string name="ws_host_hint">Host gateway WebSocket</string>
+    <string name="ws_port_hint">Port gateway (mis. 443 untuk WSS)</string>
+    <string name="ws_tls">Gunakan TLS (WSS)</string>
+    <string name="ws_payload_hint">Payload HTTP Upgrade WebSocket</string>
+    <string name="ws_payload_help">Token: [host], [port], [key], [ssh_host], [crlf]. Payload harus melakukan Upgrade WebSocket standar; gateway perlu meneruskan frame biner ke port SSH.</string>
+    <string name="security_section">Keamanan host SSH</string>
+    <string name="fingerprint_hint">Fingerprint host key SSH: SHA256:… (wajib)</string>
+    <string name="save_profile">Simpan profil terenkripsi</string>
+    <string name="connect">Hubungkan SSH</string>
+    <string name="disconnect">Putuskan</string>
+    <string name="clear_profile">Hapus profil tersimpan</string>
+    <string name="status_disconnected">Terputus</string>
+    <string name="status_connecting">Menghubungkan ke gateway WebSocket dan VPS…</string>
+    <string name="status_connected">Terhubung. SOCKS5 TCP lokal aktif di 127.0.0.1:1080.</string>
+    <string name="status_disconnecting">Memutus koneksi…</string>
+    <string name="profile_saved">Profil tersimpan terenkripsi.</string>
+    <string name="profile_missing">Belum ada profil tersimpan.</string>
+    <string name="observed_prefix">Fingerprint yang diterima (bandingkan secara independen sebelum menyimpan): </string>
+    <string name="input_required">Lengkapi host, port, username, password, dan payload yang valid.</string>
+    <string name="fingerprint_required">Sambungan SSH ditolak karena fingerprint belum dipercaya atau tidak cocok. Bandingkan fingerprint yang tampil dengan fingerprint tepercaya VPS, lalu masukkan yang benar.</string>
+    <string name="confirm_clear">Hapus profil SSH/WebSocket terenkripsi dari perangkat ini?</string>
+    <string name="usage_note">Aplikasi ini tidak membuat VPN dan tidak merutekan seluruh perangkat. Setelah tersambung, hanya aplikasi yang Anda atur sendiri untuk memakai proxy SOCKS5 127.0.0.1:1080 yang akan mengirim koneksi TCP melalui SSH. UDP tidak diteruskan. VPS harus menyediakan gateway WebSocket yang meneruskan WebSocket biner ke layanan SSH. Gunakan hanya VPS dan jaringan yang Anda berwenang akses.</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Batal</string>
+    <string name="default_payload">GET / HTTP/1.1[crlf]Host: [host][crlf]Upgrade: websocket[crlf]Connection: Upgrade[crlf]Sec-WebSocket-Key: [key][crlf]Sec-WebSocket-Version: 13[crlf][crlf]</string>
+</resources>
