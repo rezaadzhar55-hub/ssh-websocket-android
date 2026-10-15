@@ -1,6 +1,7 @@
 package com.rezadzhar.sshwebsocket;
 
 import android.app.Activity;
+import android.net.VpnService;
 import android.app.AlertDialog;
 import android.os.Bundle;
 import android.graphics.Color;
@@ -199,7 +200,7 @@ public final class MainActivity extends Activity {
         profile.setHandshakeLogger(() -> logMonitor.log("WebSocket handshake OK"));
         worker.execute(() -> {
             try {
-                manager.connect(profile, logMonitor);
+                getManager().connect(profile, logMonitor);
                 runOnUiThread(() -> {
                     busy = false;
                     status.setText(R.string.status_connected);
@@ -215,7 +216,7 @@ public final class MainActivity extends Activity {
                     });
                 });
             } catch (Exception e) {
-                String observed = manager.getObservedFingerprint();
+                String observed = getManager().getObservedFingerprint();
                 runOnUiThread(() -> {
                     busy = false;
                     if (observed != null && !observed.isEmpty()) {

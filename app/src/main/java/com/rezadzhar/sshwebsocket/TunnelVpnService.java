@@ -83,11 +83,14 @@ public class TunnelVpnService extends VpnService {
     private void bypassGateway(SshProfile profile) {
         // Resolve gateway & add bypass route
         try {
-            java.net.InetAddress[] addrs = java.net.InetAddress.getAllByName(profile.wsHost);
-            for (java.net.InetAddress a : addrs) {
-                try {
-                    protect(a.getAddress());
-                } catch (Exception ignored) { }
+            java.net.InetSocketAddress gw = new java.net.InetSocketAddress(profile.wsHost, profile.wsPort);
+            java.net.Socket probe = new java.net.Socket();
+            try {
+                probe.connect(gw, 5000);
+                protect(probe);
+                probe.close();
+            } catch (Exception ignored) {
+                try { probe.close(); } catch (Exception ignored2) { }
             }
         } catch (Exception ignored) { }
     }
