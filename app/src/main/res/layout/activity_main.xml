@@ -192,23 +192,18 @@
             android:textSize="18sp"
             android:textStyle="bold" />
 
-        <ScrollView
-            android:id="@+id/log_scroll"
+        <TextView
+            android:id="@+id/log_view"
             android:layout_width="match_parent"
             android:layout_height="260dp"
             android:layout_marginTop="8dp"
             android:background="#0E1621"
-            android:fillViewport="true">
-
-            <TextView
-                android:id="@+id/log_view"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:fontFamily="monospace"
-                android:padding="10dp"
-                android:textColor="#C9D6E4"
-                android:textSize="11sp" />
-        </ScrollView>
+            android:fontFamily="monospace"
+            android:padding="10dp"
+            android:textColor="#C9D6E4"
+            android:textSize="11sp"
+            android:scrollbars="vertical"
+            android:fadeScrollbars="false" />
 
         <Button
             android:id="@+id/log_clear_button"

@@ -31,7 +31,6 @@ public final class MainActivity extends Activity {
     private CheckBox wsTls;
     private TextView status, observedFingerprint;
     private TextView logView;
-    private ScrollView logScroll;
     private Button saveButton, connectButton, clearButton, logClearButton;
     private final LogMonitor logMonitor = new LogMonitor();
     private static final int COLOR_GREEN = 0xFF4CAF50;
@@ -48,8 +47,8 @@ public final class MainActivity extends Activity {
 
     @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        final Thread.UncaughtExceptionHandler defaultHandler = Thread.getDefaultUncaughtExceptionHandler();
-        Thread.setDefaultUncaughtExceptionHandler((t, e) -> runOnUiThread(() -> {
+        final android.os.Handler uiHandler = new android.os.Handler(android.os.Looper.getMainLooper());
+        Thread.setDefaultUncaughtExceptionHandler((t, e) -> uiHandler.post(() -> {
             android.widget.LinearLayout box = new android.widget.LinearLayout(this);
             box.setOrientation(android.widget.LinearLayout.VERTICAL);
             android.widget.TextView tv = new android.widget.TextView(this);
@@ -80,7 +79,7 @@ public final class MainActivity extends Activity {
         connectButton = findViewById(R.id.connect_button);
         clearButton = findViewById(R.id.clear_button);
         logView = findViewById(R.id.log_view);
-        logScroll = findViewById(R.id.log_scroll);
+        logView.setMovementMethod(new android.text.method.ScrollingMovementMethod());
         logClearButton = findViewById(R.id.log_clear_button);
         logClearButton.setOnClickListener(v -> {
             logMonitor.clear();
@@ -90,7 +89,6 @@ public final class MainActivity extends Activity {
         });
         logMonitor.attach(line -> runOnUiThread(() -> appendLogLine(line, 0, true)), false);
         logView.setText(DIVIDER + "\n" + "Log siap. Tekan Hubungkan SSH untuk mulai." + "\n" + DIVIDER);
-        logScroll.post(() -> logScroll.fullScroll(View.FOCUS_DOWN));
 
         saveButton.setOnClickListener(v -> saveProfile());
         connectButton.setOnClickListener(v -> toggleConnection());
@@ -258,7 +256,11 @@ public final class MainActivity extends Activity {
                     Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
         logView.append(sb);
-        if (autoScroll) logScroll.post(() -> logScroll.fullScroll(View.FOCUS_DOWN));
+        if (autoScroll) logView.post(() -> {
+            int offset = logView.getLayout() != null ? logView.getLayout().getLineTop(logView.getLineCount()) : 0;
+            if (offset > logView.getHeight()) logView.scrollTo(0, offset - logView.getHeight());
+            else logView.scrollTo(0, 0);
+        });
     }
 
     private void refreshUi() {
