@@ -1,6 +1,7 @@
 package com.rezadzhar.sshwebsocket;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.net.VpnService;
 import android.app.AlertDialog;
 import android.os.Bundle;
